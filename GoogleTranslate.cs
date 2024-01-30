@@ -43,7 +43,7 @@ namespace dr_lin
         };
 
 
-        private static string danganronpaRegex = @"(<CLT 1>.*?<CLT>)|(<CLT 9>.*?<CLT>)|(<CLT 69>.*?<CLT>)|(<.*?>)|(\\n)|(\%.*?\%)|(\[.*?\])|(\"")";
+        private static string danganronpaRegex = @"(<CLT 1>.*?<CLT>)|(<CLT 9>.*?<CLT>)|(<CLT 69>.*?<CLT>)|(<.*?>)|(\\n)|(\%.*?\%)|(\[.*?\])";
 
         private static HttpClient translateClient = new HttpClient()
         {
