@@ -83,9 +83,7 @@ namespace LIN
 				return;
 			}
 
-			Console.WriteLine("Translating selected");
 			GoogleTranslate.TranslateDirectory(input, output).Wait();
-			return;
 		}
 	}
 }
