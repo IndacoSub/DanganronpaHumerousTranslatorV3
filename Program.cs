@@ -33,7 +33,7 @@ namespace LIN
 
 		static void Main(string[] args)
 		{
-			// Not by default on purpose
+			// False by default on purpose
 			bool is_v3 = false;
 			string input, output;
 
