@@ -47,14 +47,6 @@ namespace dr_lin
 			return stuff[0][0];
 		}
 
-		private static async Task<ScriptEntry> TranslateLine(ScriptEntry inp, int depth = 5)
-		{
-			//Console.WriteLine("About to be translated: " + inp.Text);
-			inp.Text = await TranslateLine(inp.Text, depth);
-			//Console.WriteLine("Translated line: " + inp.Text);
-			return inp;
-		}
-
 		private static async Task<string> FunnyTranslateText(string text, int repeat)
 		{
 			string newText = text;
@@ -129,38 +121,42 @@ namespace dr_lin
 			}
 			try
 			{
-				Script script = new Script(filePath);
+				List<string> dialogue = new List<string>();
+				var lines = System.IO.File.ReadAllLines(filePath);
+				dialogue.AddRange(lines);
 
-				if (script.ScriptData.Count == 0)
+				if (dialogue.Count == 0)
 				{
 					return;
 				}
 
-				Dictionary<int, ScriptEntry> tobeReplaced = new Dictionary<int, ScriptEntry>();
+				Dictionary<int, string> tobeReplaced = new Dictionary<int, string>();
 
-				foreach (ScriptEntry e in script.ScriptData)
+				int i = 0;
+				foreach (string e in dialogue)
 				{
-					if (e.Text == null)
+					i++;
+					if (e == null)
 					{
 						continue;
 					}
-					if (e.Text.Length < 2)
+					if (e.Length < 2)
 					{
 						continue;
 					}
-					if (e.Text == "..." || e.Text == "... ")
+					if (e == "..." || e == "... ")
 					{
 						continue;
 					}
-					if (e.Text.StartsWith("[") && e.Text.EndsWith("]"))
+					if (e.StartsWith("[") && e.EndsWith("]"))
 					{
 						continue;
 					}
-					if (e.Text.StartsWith("{") || e.Text.StartsWith("}"))
+					if (e.StartsWith("{") || e.StartsWith("}"))
 					{
 						continue;
 					}
-					tobeReplaced.Add(script.ScriptData.IndexOf(e), e);
+					tobeReplaced.Add((i - 1), e);
 				}
 				if (tobeReplaced.Count == 0)
 				{
@@ -173,10 +169,10 @@ namespace dr_lin
 
 				await System.Threading.Tasks.Parallel.ForEachAsync(tobeReplaced, options, async (pair, token) =>
 				{
-					script.ScriptData[pair.Key] = await GoogleTranslate.TranslateLine(pair.Value, repeats);
+					dialogue[pair.Key] = await GoogleTranslate.TranslateLine(pair.Value, repeats);
 				});
 
-				ScriptWrite.WriteCompiled(script, new_path);
+				ScriptWrite.WriteCompiled(dialogue, new_path);
 
 				Console.ForegroundColor = ConsoleColor.Yellow;
 				Console.WriteLine("Translated " + Path.GetFileName(filePath) + " (" + FilePathsIn.ToList().IndexOf(filePath) + "/" + FilePathsIn.Length + ")");

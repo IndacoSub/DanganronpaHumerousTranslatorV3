@@ -2,7 +2,7 @@
 {
 	static class ScriptWrite
 	{
-		static public void WriteCompiled(Script s, string Filename)
+		static public void WriteCompiled(List<string> dialogue, string Filename)
 		{
 			Directory.CreateDirectory(Directory.GetParent(Filename).FullName);
 
@@ -10,9 +10,9 @@
 			{
 				using (StreamWriter sw = new StreamWriter(fs))
 				{
-					foreach (var sd in s.ScriptData)
+					foreach (var sd in dialogue)
 					{
-						sw.WriteLine(sd.Text.Normalize().Trim());
+						sw.WriteLine(sd.Normalize().Trim());
 					}
 					sw.Close();
 					sw.Dispose();
