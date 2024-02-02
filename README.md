@@ -1,6 +1,6 @@
 # DanganronpaHumerousTranslatorV3
 
-# This is a fork of [DanganronpaHumerousTranslator](https://github.com/morgana-x/DanganronpaHumerousTranslator) focused on DRV3
+# This is a fork of [DanganronpaHumerousTranslator](https://github.com/morgana-x/DanganronpaHumerousTranslator) focused on DRV3 (thanks @morgana-x !)
 
 # DR1, DR2, DRAE and DRS aren't supported
 
