@@ -33,7 +33,8 @@ namespace LIN
 
 		static void Main(string[] args)
 		{
-			Game game = Game.Base;
+			// Not by default on purpose
+			bool is_v3 = false;
 			string input, output;
 
 			// Parse arguments
@@ -52,7 +53,7 @@ namespace LIN
 				if (a.StartsWith("-"))
 				{
 					if (a.ToLowerInvariant() == "-h" || a.ToLowerInvariant() == "--help") { DisplayUsage(); }
-					if (a.ToLowerInvariant() == "-drv3" || a.ToLowerInvariant() == "--danganronpav3") { game = Game.DanganronpaV3; }
+					if (a.ToLowerInvariant() == "-drv3" || a.ToLowerInvariant() == "--danganronpav3") { is_v3 = true; }
 					if (a.ToLowerInvariant() == "-s" || a.ToLowerInvariant() == "--silent") { silentMode = true; }
 					// if (a.ToLowerInvariant() == "-dmp" || a.ToLowerInvariant() == "--dump") { dump = true; }
 				}
@@ -72,11 +73,9 @@ namespace LIN
 				output = plainArgs.Count == 2 ? plainArgs[1] : TrimExtension(input) + ".txt";
 			}
 
-			Console.WriteLine("Game: " + game);
-
-			if (game < Game.DanganronpaV3)
+			if (!is_v3)
 			{
-				Console.WriteLine("Please use the original version instead: https://github.com/morgana-x/DanganronpaHumerousTranslator");
+				Console.WriteLine("Please consider using the original version instead: https://github.com/morgana-x/DanganronpaHumerousTranslator");
 				Console.WriteLine("This (stripped-down) version is *only* suited for Danganronpa V3 (--danganronpav3).");
 				Console.WriteLine("As for support, we don’t plan to provide any assistance. You're on your own.");
 				Console.WriteLine("While you’re welcome to request new features, we cannot guarantee their implementation.");
