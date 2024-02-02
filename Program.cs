@@ -1,97 +1,92 @@
 ﻿using dr_lin;
-using System;
-using System.Collections.Generic;
 
 namespace LIN
 {
-    public class Program
-    {
-        private static bool silentMode = false;
-        public static void PrintLine<T>(T line)
-        {
-            if (!silentMode)
-                Console.WriteLine(line);
-        }
+	public static class Program
+	{
+		private static bool silentMode = false;
+		public static void PrintLine<T>(T line)
+		{
+			if (!silentMode)
+			{
+				Console.WriteLine(line);
+			}
+		}
 
-        static string TrimExtension(string path)
-        {
-            int len = path.LastIndexOf('.');
-            return len == -1 ? path : path.Substring(0, len);
-        }
+		static string TrimExtension(string path)
+		{
+			int len = path.LastIndexOf('.');
+			return len == -1 ? path : path.Substring(0, len);
+		}
 
-        static void DisplayUsage()
-        {
-            Console.WriteLine("\nlin_compiler: danganronpa script (de)compiler");
-            Console.WriteLine("usage: lin_compiler [options] input [output]\n");
-            Console.WriteLine("options:");
-            Console.WriteLine("-h, --help\t\tdisplay this message");
-            Console.WriteLine("-d, --decompile\t\tdecompile the input file (default is compile)");
-            Console.WriteLine("-dr2, --danganronpa2\tenable danganronpa 2 mode");
-            Console.WriteLine("-s, --silent\t\tsuppress all non-error messages");
-            Console.WriteLine();
-            Environment.Exit(0);
-        }
+		static void DisplayUsage()
+		{
+			Console.WriteLine("\nDanganronpaFunnyTranslator");
+			Console.WriteLine("usage: danganronpafunnytranslator [options] input [output]\n");
+			Console.WriteLine("options:");
+			Console.WriteLine("-h, --help\t\tdisplay this message");
+			Console.WriteLine("-drv3, --danganronpav3\tenable danganronpa v3 mode");
+			Console.WriteLine("-s, --silent\t\tsuppress all non-error messages");
+			Console.WriteLine();
+			Environment.Exit(0);
+		}
 
-        static void Main(string[] args)
-        {
-            Game game = Game.Base;
-            bool decompile = false;
-            string input, output;
-            //bool dump = false;
-            bool translate = true;
+		static void Main(string[] args)
+		{
+			Game game = Game.Base;
+			string input, output;
 
-            // Parse arguments
-            List<string> plainArgs = new List<string>();
-            if (args.Length == 0) DisplayUsage();
+			// Parse arguments
+			List<string> plainArgs = new List<string>();
+			if (args.Length == 0)
+			{
+				DisplayUsage();
+			}
 
-            foreach (string a in args)
-            {
-                if (a.StartsWith("-"))
-                {
-                    if (a == "-h" || a == "--help")           { DisplayUsage(); }
-                    if (a == "-d" || a == "--decompile")      { decompile = true; }
-                    if (a == "-dr2" || a == "--danganronpa2") { game = Game.Danganronpa2; }
-                    if (a == "-s" || a == "--silent")         { silentMode = true; }
-                   // if (a == "-dmp" || a == "--dump") { dump = true; }
-                    if (a == "-trs" || a == "--translate") { translate = true; }
-                }
-                else
-                {
-                    plainArgs.Add(a);
-                }
-            }
+			foreach (string a in args)
+			{
+				if (a.ToLowerInvariant() == null)
+				{
+					continue;
+				}
+				if (a.StartsWith("-"))
+				{
+					if (a.ToLowerInvariant() == "-h" || a.ToLowerInvariant() == "--help") { DisplayUsage(); }
+					if (a.ToLowerInvariant() == "-drv3" || a.ToLowerInvariant() == "--danganronpav3") { game = Game.DanganronpaV3; }
+					if (a.ToLowerInvariant() == "-s" || a.ToLowerInvariant() == "--silent") { silentMode = true; }
+					// if (a.ToLowerInvariant() == "-dmp" || a.ToLowerInvariant() == "--dump") { dump = true; }
+				}
+				else
+				{
+					plainArgs.Add(a.ToLowerInvariant());
+				}
+			}
 
-            if (plainArgs.Count == 0 || plainArgs.Count > 2)
-            {
-                throw new Exception("error: incorrect arguments.");
-            }
-            else
-            {
-                input = plainArgs[0];
-                output = plainArgs.Count == 2 ? plainArgs[1] : TrimExtension(input) + (decompile ? ".txt" : ".lin");
-            }
+			if (plainArgs.Count == 0 || plainArgs.Count > 2)
+			{
+				throw new Exception("error: incorrect arguments.");
+			}
+			else
+			{
+				input = plainArgs[0];
+				output = plainArgs.Count == 2 ? plainArgs[1] : TrimExtension(input) + ".txt";
+			}
 
-            // Generate opcode name lookup
-            Opcode.GenerateOpcodeLookup();
+			Console.WriteLine("Game: " + game);
 
+			if (game < Game.DanganronpaV3)
+			{
+				Console.WriteLine("Please use the original version instead: https://github.com/morgana-x/DanganronpaHumerousTranslator");
+				Console.WriteLine("This (stripped-down) version is *only* suited for Danganronpa V3 (--danganronpav3).");
+				Console.WriteLine("As for support, we don’t plan to provide any assistance. You're on your own.");
+				Console.WriteLine("While you’re welcome to request new features, we cannot guarantee their implementation.");
+				Console.WriteLine("Thank you for your understanding.");
+				return;
+			}
 
-            if (translate)
-            {
-                Console.WriteLine("Translating selected");
-                GoogleTranslate.TranslateDirectory(input, output, game).Wait();
-                return;
-            }
-
-            // Execute desired functionality
-            Script s = new Script(input, decompile, game);
-            if (decompile)
-            {
-                ScriptWrite.WriteSource(s, output, game);
-            }
-            else
-            {
-                ScriptWrite.WriteCompiled(s, output, game);
-            }
-        }
-    }
+			Console.WriteLine("Translating selected");
+			GoogleTranslate.TranslateDirectory(input, output).Wait();
+			return;
+		}
+	}
 }
