@@ -77,8 +77,8 @@ namespace LIN
 			{
 				Console.WriteLine("Please consider using the original version instead: https://github.com/morgana-x/DanganronpaHumerousTranslator");
 				Console.WriteLine("This (stripped-down) version is *only* suited for Danganronpa V3 (--danganronpav3).");
-				Console.WriteLine("As for support, we don’t plan to provide any assistance. You're on your own.");
-				Console.WriteLine("While you’re welcome to request new features, we cannot guarantee their implementation.");
+				Console.WriteLine("As for support, we don't plan to provide any assistance. You're on your own.");
+				Console.WriteLine("While you're welcome to request new features, we cannot guarantee their implementation.");
 				Console.WriteLine("Thank you for your understanding.");
 				return;
 			}
