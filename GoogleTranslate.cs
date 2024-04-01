@@ -8,6 +8,7 @@ namespace dr_lin
 		private static readonly List<string> languages = new List<string>()
 		{
 			"en",
+			"it",
 			"es",
 			"fr",
 			"de",
@@ -47,18 +48,24 @@ namespace dr_lin
 			return stuff[0][0];
 		}
 
-		private static async Task<string> FunnyTranslateText(string text, int repeat)
+		private static async Task<string> FunnyTranslateText(string text, int repeat, string language)
 		{
 			string newText = text;
 			for (int i = 0; i < repeat; i++)
 			{
-				newText = await Translate(newText, languages[rnd.Next(languages.Count - 1)]);
+				string new_language = "";
+				do
+				{
+					int it = rnd.Next(languages.Count - 1);
+					new_language = languages[it];
+					// Avoid translating in the final language
+				} while (new_language == language);
+				newText = await Translate(newText, new_language);
 			}
-			// Replace "en" with another language if needed
-			return await Translate(newText, "en");
+			return await Translate(newText, language);
 		}
 
-		private static async Task<string> TranslateLine(string inp, int repeats = 5)
+		private static async Task<string> TranslateLine(string inp, string language, int repeats = 5)
 		{
 			Regex drSplitText = new Regex(danganronpaRegex);
 
@@ -78,7 +85,7 @@ namespace dr_lin
 
 			await System.Threading.Tasks.Parallel.ForEachAsync(certifiedChunksToTranslate, options, async (text, token) =>
 			{
-				string newText = await FunnyTranslateText(text, repeats);
+				string newText = await FunnyTranslateText(text, repeats, language);
 				translateDict.Add(text, newText);
 			});
 
@@ -105,28 +112,35 @@ namespace dr_lin
 			return inp;
 		}
 
-		public static async Task TranslateFile(string filePath, string in_path, string out_path, string[] FilePathsIn, int repeats = 10)
+		public static async Task TranslateFile(string filePath, string in_path, string out_path, string[] FilePathsIn, string language, int repeats = 10)
 		{
 			if (!filePath.EndsWith(".txt"))
 			{
 				return;
 			}
 
-			string new_path = filePath.Replace(in_path, out_path);
+			string simple_name = Path.GetFileName(filePath);
+
+			string new_path = Path.Combine(out_path, simple_name);
+
+			if (new_path.Length == 0)
+			{
+				Console.WriteLine("New path length is zero!");
+				return;
+			}
 
 			if (System.IO.File.Exists(new_path))
 			{
-				Console.WriteLine("File already exists: " + new_path);
+				Console.WriteLine("File already exists: " + new_path + ", skipping...");
 				return;
 			}
 			try
 			{
-				List<string> dialogue = new List<string>();
-				var lines = System.IO.File.ReadAllLines(filePath);
-				dialogue.AddRange(lines);
+				List<string> dialogue = ScriptWrite.ReadFile(filePath, language);
 
 				if (dialogue.Count == 0)
 				{
+					Console.WriteLine("Empty file: " + filePath);
 					return;
 				}
 
@@ -148,11 +162,15 @@ namespace dr_lin
 					{
 						continue;
 					}
+					if (e.Replace(" ", "").Length <= 0)
+					{
+						continue;
+					}
 					if (e.StartsWith("[") && e.EndsWith("]"))
 					{
 						continue;
 					}
-					if (e.StartsWith("{") || e.StartsWith("}"))
+					if ((i == 1 && e.StartsWith("{")) || e.StartsWith("}"))
 					{
 						continue;
 					}
@@ -165,17 +183,15 @@ namespace dr_lin
 
 				var options = new ParallelOptions { MaxDegreeOfParallelism = 500 };
 
-				//Console.WriteLine("Starting to translate " + Path.GetFileNameWithoutExtension(filePath));
-
 				await System.Threading.Tasks.Parallel.ForEachAsync(tobeReplaced, options, async (pair, token) =>
 				{
-					dialogue[pair.Key] = await GoogleTranslate.TranslateLine(pair.Value, repeats);
+					dialogue[pair.Key] = await GoogleTranslate.TranslateLine(pair.Value, language, repeats);
 				});
 
-				ScriptWrite.WriteCompiled(dialogue, new_path);
+				ScriptWrite.WriteCompiled(dialogue, new_path, language);
 
 				Console.ForegroundColor = ConsoleColor.Yellow;
-				Console.WriteLine("Translated " + Path.GetFileName(filePath) + " (" + FilePathsIn.ToList().IndexOf(filePath) + "/" + FilePathsIn.Length + ")");
+				Console.WriteLine("Translated " + Path.GetFileName(filePath) + " (" + (FilePathsIn.ToList().IndexOf(filePath) + 1) + "/" + FilePathsIn.Length + ")");
 				Console.ForegroundColor = ConsoleColor.Gray;
 			}
 			catch (Exception e)
@@ -186,11 +202,11 @@ namespace dr_lin
 			}
 		}
 
-		public static async Task TranslateBatch(string[] FilePathsIn, string in_path, string out_path, int repeats = 10)
+		public static async Task TranslateBatch(string[] FilePathsIn, string in_path, string out_path, string language, int repeats = 10)
 		{
 			foreach (string filePath in FilePathsIn)
 			{
-				await TranslateFile(filePath, in_path, out_path, FilePathsIn, repeats: repeats);
+				await TranslateFile(filePath, in_path, out_path, FilePathsIn, language, repeats: repeats);
 			}
 		}
 
@@ -206,19 +222,22 @@ namespace dr_lin
 		{
 			Console.WriteLine("Translating files from " + in_path + " to " + out_path);
 
-			List<string> FilePathsIn = Directory.GetFiles(in_path, "*.*", SearchOption.AllDirectories).ToList().Where((x) => x.EndsWith(".txt") && !x.Contains(".git") && !System.IO.File.Exists(x.Replace(in_path, out_path))).ToList();
+			List<string> FilePathsIn = Directory.GetFiles(in_path, "*.*", SearchOption.AllDirectories).ToList().Where((x) => x.EndsWith(".txt") && !x.Contains(".git")).ToList();
 
 			if (FilePathsIn.Count == 0)
 			{
+				Console.WriteLine("No files were found!");
 				return;
 			}
+			Console.WriteLine("Found " + FilePathsIn.Count + " files.");
 
 			const int threads = 16;
 
-			List<List<string>> filePathChunks = SplitList(FilePathsIn, nSize: FilePathsIn.Count / threads).ToList();
+			List<List<string>> filePathChunks = SplitList(FilePathsIn, nSize: Math.Max(1, FilePathsIn.Count / threads)).ToList();
 
-			if (filePathChunks.Count == 0)
+			if (filePathChunks == null || filePathChunks.Count == 0)
 			{
+				Console.WriteLine("No chunks!");
 				return;
 			}
 
@@ -226,9 +245,17 @@ namespace dr_lin
 
 			var options = new ParallelOptions { MaxDegreeOfParallelism = 300 };
 
+			// Replace "en" with another language if needed
+			string language = "en";
+
+			if (!languages.Contains(language))
+			{
+				Console.WriteLine("Google Translate may not support this language but I guess we'll see...");
+			}
+
 			await System.Threading.Tasks.Parallel.ForEachAsync(filePathChunks, options, async (chunk, token) =>
 
-				await GoogleTranslate.TranslateBatch(chunk.ToArray(), in_path, out_path, repeats: 10)
+				await GoogleTranslate.TranslateBatch(chunk.ToArray(), in_path, out_path, language, repeats: 10)
 
 			);
 
