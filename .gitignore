@@ -1,0 +1,16 @@
+
+*.v2
+*.suo
+*.vsidx
+*.json
+*.pdb
+*.txt
+*.bak
+*.props
+*.targets
+*.cache
+*.editorconfig
+
+obj/*
+bin/*
+*.bin

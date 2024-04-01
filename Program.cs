@@ -1,97 +1,107 @@
 ﻿using dr_lin;
-using System;
-using System.Collections.Generic;
+using System.Text;
 
 namespace LIN
 {
-    public class Program
-    {
-        private static bool silentMode = false;
-        public static void PrintLine<T>(T line)
-        {
-            if (!silentMode)
-                Console.WriteLine(line);
-        }
+	public static class Program
+	{
+		private static bool silentMode = false;
+		public static void PrintLine<T>(T line)
+		{
+			if (!silentMode)
+			{
+				Console.WriteLine(line);
+			}
+		}
 
-        static string TrimExtension(string path)
-        {
-            int len = path.LastIndexOf('.');
-            return len == -1 ? path : path.Substring(0, len);
-        }
+		static void DisplayUsage()
+		{
+			Console.WriteLine("\nDanganronpaFunnyTranslator");
+			Console.WriteLine("usage: danganronpafunnytranslator [options] input-folder output-folder\n");
+			Console.WriteLine("options:");
+			Console.WriteLine("-h, --help\t\tdisplay this message");
+			Console.WriteLine("-drv3, --danganronpav3\tenable danganronpa v3 mode");
+			Console.WriteLine("-s, --silent\t\tsuppress all non-error messages");
+			Console.WriteLine();
+			Environment.Exit(0);
+		}
 
-        static void DisplayUsage()
-        {
-            Console.WriteLine("\nlin_compiler: danganronpa script (de)compiler");
-            Console.WriteLine("usage: lin_compiler [options] input [output]\n");
-            Console.WriteLine("options:");
-            Console.WriteLine("-h, --help\t\tdisplay this message");
-            Console.WriteLine("-d, --decompile\t\tdecompile the input file (default is compile)");
-            Console.WriteLine("-dr2, --danganronpa2\tenable danganronpa 2 mode");
-            Console.WriteLine("-s, --silent\t\tsuppress all non-error messages");
-            Console.WriteLine();
-            Environment.Exit(0);
-        }
+		static void Main(string[] args)
+		{
+			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        static void Main(string[] args)
-        {
-            Game game = Game.Base;
-            bool decompile = false;
-            string input, output;
-            //bool dump = false;
-            bool translate = true;
+			// False by default on purpose
+			bool is_v3 = false;
+			string input, output;
 
-            // Parse arguments
-            List<string> plainArgs = new List<string>();
-            if (args.Length == 0) DisplayUsage();
+			List<string> my_args = args.ToList();
 
-            foreach (string a in args)
-            {
-                if (a.StartsWith("-"))
-                {
-                    if (a == "-h" || a == "--help")           { DisplayUsage(); }
-                    if (a == "-d" || a == "--decompile")      { decompile = true; }
-                    if (a == "-dr2" || a == "--danganronpa2") { game = Game.Danganronpa2; }
-                    if (a == "-s" || a == "--silent")         { silentMode = true; }
-                   // if (a == "-dmp" || a == "--dump") { dump = true; }
-                    if (a == "-trs" || a == "--translate") { translate = true; }
-                }
-                else
-                {
-                    plainArgs.Add(a);
-                }
-            }
+			// Parse arguments
+			List<string> plainArgs = new List<string>();
+			if (my_args.Count == 0)
+			{
+				DisplayUsage();
+			}
 
-            if (plainArgs.Count == 0 || plainArgs.Count > 2)
-            {
-                throw new Exception("error: incorrect arguments.");
-            }
-            else
-            {
-                input = plainArgs[0];
-                output = plainArgs.Count == 2 ? plainArgs[1] : TrimExtension(input) + (decompile ? ".txt" : ".lin");
-            }
+			foreach (string a in my_args)
+			{
+				if (a.ToLowerInvariant() == null || a.Replace("-", "").Replace(" ", "").Length == 0)
+				{
+					continue;
+				}
+				string b = a;
+				if (b.StartsWith("-"))
+				{
+					b = b.Replace("--", "-");
+					if (b.ToLowerInvariant() == "-h" || b.ToLowerInvariant() == "-help") { DisplayUsage(); }
+					if (b.ToLowerInvariant() == "-drv3" || b.ToLowerInvariant() == "-danganronpav3") { is_v3 = true; }
+					if (b.ToLowerInvariant() == "-s" || b.ToLowerInvariant() == "-silent") { silentMode = true; }
+				}
+				else
+				{
+					plainArgs.Add(b.ToLowerInvariant());
+				}
+			}
 
-            // Generate opcode name lookup
-            Opcode.GenerateOpcodeLookup();
+			if (plainArgs.Count == 0 || plainArgs.Count > 2)
+			{
+				throw new Exception("error: incorrect arguments.");
+			}
+			else
+			{
+				input = plainArgs[0];
+				output = plainArgs.Count == 2 ? plainArgs[1] : string.Empty;
 
+				if (output.Length == 0)
+				{
+					Console.WriteLine("You forgot to specify an output directory");
+					return;
+				}
 
-            if (translate)
-            {
-                Console.WriteLine("Translating selected");
-                GoogleTranslate.TranslateDirectory(input, output, game).Wait();
-                return;
-            }
+				if (File.Exists(output))
+				{
+					Console.WriteLine("The output argument must be a folder");
+					return;
+				}
 
-            // Execute desired functionality
-            Script s = new Script(input, decompile, game);
-            if (decompile)
-            {
-                ScriptWrite.WriteSource(s, output, game);
-            }
-            else
-            {
-                ScriptWrite.WriteCompiled(s, output, game);
-            }
-        }
-    }
+				if (!Directory.Exists(output))
+				{
+					Console.WriteLine("The specified output directory doesn't exist, creating now...");
+					Directory.CreateDirectory(output);
+				}
+			}
+
+			if (!is_v3)
+			{
+				Console.WriteLine("Please consider using the original version instead: https://github.com/morgana-x/DanganronpaHumerousTranslator");
+				Console.WriteLine("This (stripped-down) version is *only* suited for Danganronpa V3 (--danganronpav3).");
+				Console.WriteLine("As for support, we don't plan to provide any assistance. You're on your own.");
+				Console.WriteLine("While you're welcome to request new features, we cannot guarantee their implementation.");
+				Console.WriteLine("We hope you understand.");
+				return;
+			}
+
+			GoogleTranslate.TranslateDirectory(input, output).Wait();
+		}
+	}
 }
